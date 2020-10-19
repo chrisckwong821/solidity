@@ -1336,7 +1336,7 @@ optional<string> CHC::generateCounterexample(CHCSolverInterface::CexGraph const&
 {
 	optional<unsigned> rootId;
 	for (auto const& [id, node]: _graph.nodes)
-		if (node.first == _root)
+		if (node.name == _root)
 		{
 			rootId = id;
 			break;
@@ -1360,18 +1360,18 @@ optional<string> CHC::generateCounterexample(CHCSolverInterface::CexGraph const&
 		if (edges.size() == 2)
 		{
 			interfaceId = edges.at(1);
-			if (!Predicate::predicate(_graph.nodes.at(summaryId).first)->isSummary())
+			if (!Predicate::predicate(_graph.nodes.at(summaryId).name)->isSummary())
 				swap(summaryId, *interfaceId);
-			auto interfacePredicate = Predicate::predicate(_graph.nodes.at(*interfaceId).first);
+			auto interfacePredicate = Predicate::predicate(_graph.nodes.at(*interfaceId).name);
 			solAssert(interfacePredicate && interfacePredicate->isInterface(), "");
 		}
 		/// The children are unordered, so we need to check which is the summary and
 		/// which is the interface.
 
-		Predicate const* summaryPredicate = Predicate::predicate(_graph.nodes.at(summaryId).first);
+		Predicate const* summaryPredicate = Predicate::predicate(_graph.nodes.at(summaryId).name);
 		solAssert(summaryPredicate && summaryPredicate->isSummary(), "");
 		/// At this point property 2 from the function description is verified for this node.
-		auto summaryArgs = _graph.nodes.at(summaryId).second;
+		vector<smtutil::Expression> summaryArgs = _graph.nodes.at(summaryId).arguments;
 
 		FunctionDefinition const* calledFun = summaryPredicate->programFunction();
 		ContractDefinition const* calledContract = summaryPredicate->programContract();
@@ -1417,7 +1417,7 @@ optional<string> CHC::generateCounterexample(CHCSolverInterface::CexGraph const&
 		/// or stop.
 		if (interfaceId)
 		{
-			Predicate const* interfacePredicate = Predicate::predicate(_graph.nodes.at(*interfaceId).first);
+			Predicate const* interfacePredicate = Predicate::predicate(_graph.nodes.at(*interfaceId).name);
 			solAssert(interfacePredicate && interfacePredicate->isInterface(), "");
 			node = *interfaceId;
 		}
@@ -1433,7 +1433,13 @@ string CHC::cex2dot(CHCSolverInterface::CexGraph const& _cex)
 	string dot = "digraph {\n";
 
 	auto pred = [&](CHCSolverInterface::CexNode const& _node) {
-		return "\"" + _node.first + "(" + boost::algorithm::join(_node.second, ", ") + ")\"";
+		vector<string> args;
+		for (auto const& arg: _node.arguments)
+		{
+			solAssert(arg.arguments.empty(), "");
+			args.push_back(arg.name);
+		}
+		return "\"" + _node.name + "(" + boost::algorithm::join(args, ", ") + ")\"";
 	};
 
 	for (auto const& [u, vs]: _cex.edges)
