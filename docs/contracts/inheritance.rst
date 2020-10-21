@@ -154,7 +154,7 @@ seen in the following example::
 
 A call to ``Final.destroy()`` will call ``Base2.destroy`` because we specify it
 explicitly in the final override, but this function will bypass
-``Base1.destroy``. The way around this is to use ``super``::
+``Base1.destroy``. The work around of this is to use ``super``::
 
     // SPDX-License-Identifier: GPL-3.0
     pragma solidity ^0.7.0;
